@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
+import hero from "../assets/hero.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -39,7 +40,7 @@ export default function Login() {
       <Card className="max-w-md w-full relative z-10 shadow-2xl border-slate-700">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto">
-            <img src="/src/assets/hero.png" alt="Al-Mukhamis" className="w-20 h-20 mx-auto object-contain mb-2" />
+            <img src={hero} alt="Al-Mukhamis" className="w-20 h-20 mx-auto object-contain mb-2" />
           </div>
           <div>
             <CardTitle className="text-3xl">Admin Login</CardTitle>
