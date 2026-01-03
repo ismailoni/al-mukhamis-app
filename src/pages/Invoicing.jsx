@@ -28,6 +28,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
+import { Combobox } from "../components/ui/combobox";
 
 export default function Invoicing() {
   const queryClient = useQueryClient();
@@ -442,19 +443,15 @@ export default function Invoicing() {
             <div className="space-y-2">
               <Label htmlFor="customer">Customer</Label>
               <div className="flex gap-2">
-                <select
-                  id="customer"
-                  className="flex-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                <Combobox
+                  options={[
+                    { value: "cash", label: "Walk-in (no history)" },
+                    ...(customers?.map((c) => ({ value: c.id, label: c.name })) || []),
+                  ]}
                   value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
-                >
-                  <option value="cash">Walk-in (no history)</option>
-                  {customers?.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setSelectedCustomerId}
+                  placeholder="Select a customer..."
+                />
                 <Button
                   type="button"
                   variant="outline"
