@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { formatCurrency } from "../lib/utils";
+import { LoadingState } from "../components/LoadingState";
 import { Filter, Receipt, Eye } from "lucide-react";
 import {
   Card,
@@ -41,6 +42,8 @@ export default function Sales() {
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
   });
+
+  const isLoadingData = isLoading;
 
   const getDateRange = (period) => {
     const now = new Date();
@@ -236,6 +239,10 @@ export default function Sales() {
       </div>
     );
   };
+
+  if (isLoadingData) {
+    return <LoadingState message="Loading sales history..." />;
+  }
 
   return (
     <div className="space-y-6">

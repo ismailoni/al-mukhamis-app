@@ -12,7 +12,8 @@ import {
   query as fsQuery,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { formatCurrency } from "../lib/utils";
+import { formatCurrency, parseMultiplier, toFraction } from "../lib/utils";
+import { LoadingState } from "../components/LoadingState";
 import toast from "react-hot-toast";
 import { Plus, Edit, Package, History, Trash2 } from "lucide-react";
 import {
@@ -35,18 +36,6 @@ import {
 } from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
 
-const parseMultiplier = (value) => {
-  if (typeof value === "number") return value || 1;
-  if (!value) return 1;
-  const str = value.toString().trim();
-  if (str.includes("/")) {
-    const [num, den] = str.split("/").map(Number);
-    if (den && !Number.isNaN(num) && !Number.isNaN(den)) return num / den;
-  }
-  const num = parseFloat(str);
-  return Number.isFinite(num) ? num : 1;
-};
-
 export default function Inventory() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +48,7 @@ export default function Inventory() {
   const [stockRows, setStockRows] = useState([{ id: 1, productId: "", qty: 1 }]);
 
   // Fetch Products
-  const { data: products } = useQuery({
+  const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const snapshot = await getDocs(collection(db, "products"));
@@ -68,7 +57,7 @@ export default function Inventory() {
   });
 
   // Stock addition history
-  const { data: stockHistory } = useQuery({
+  const { data: stockHistory, isLoading: historyLoading } = useQuery({
     queryKey: ["stock-entries"],
     queryFn: async () => {
       const snapshot = await getDocs(fsQuery(collection(db, "stock_entries"), orderBy("addedAt", "desc")));
@@ -198,6 +187,12 @@ export default function Inventory() {
     onError: (err) => toast.error(err.message),
   });
 
+  const isLoadingData = productsLoading || historyLoading;
+
+  if (isLoadingData) {
+    return <LoadingState message="Loading inventory data..." />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -244,15 +239,15 @@ export default function Inventory() {
                   </TableCell>
                   <TableCell>
                     {product.stock < 10 ? (
-                      <Badge variant="warning">{product.stock} (Low Stock)</Badge>
+                      <Badge variant="warning">{toFraction(product.stock)} (Low Stock)</Badge>
                     ) : (
-                      <span className="text-muted-foreground">{product.stock}</span>
+                      <span className="text-muted-foreground">{toFraction(product.stock)}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground space-y-1">
                     {(product.saleModes || [{ name: "Unit", multiplier: 1, price: product.price }]).map((mode, idx) => (
                       <div key={idx} className="flex justify-between gap-2">
-                        <span>{mode.name} ({mode.multiplier}x)</span>
+                        <span>{mode.name} ({toFraction(mode.multiplier)}x)</span>
                         <span className="font-medium">{formatCurrency(mode.price)}</span>
                       </div>
                     ))}

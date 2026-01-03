@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { collection, getDocs, serverTimestamp, addDoc, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { formatCurrency } from "../lib/utils";
+import { LoadingState } from "../components/LoadingState";
 import toast from "react-hot-toast";
 import { Users, History, Plus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -17,7 +18,7 @@ export default function Customers() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [historyCustomer, setHistoryCustomer] = useState(null);
 
-  const { data: customers } = useQuery({
+  const { data: customers, isLoading: customersLoading } = useQuery({
     queryKey: ["customers"],
     queryFn: async () => {
       const snap = await getDocs(collection(db, "customers"));
@@ -45,9 +46,6 @@ export default function Customers() {
   }
 });
 
-// Add this to your JSX to see if there's an error
-{historyError && <p className="text-red-500 text-sm">Error loading history. Check Firestore Indexes.</p>}
-
   const addCustomerMutation = useMutation({
     mutationFn: async (data) => {
       await addDoc(collection(db, "customers"), {
@@ -62,6 +60,10 @@ export default function Customers() {
       toast.success("Customer added");
     }
   });
+
+  if (customersLoading) {
+    return <LoadingState message="Loading customers..." />;
+  }
 
   return (
     <div className="space-y-6">
@@ -84,6 +86,9 @@ export default function Customers() {
           <CardDescription>All customers and their balances</CardDescription>
         </CardHeader>
         <CardContent>
+          {historyError && (
+            <p className="text-red-500 text-sm mb-3">Error loading history. Check Firestore indexes.</p>
+          )}
           <Table>
             <TableHeader>
               <TableRow>

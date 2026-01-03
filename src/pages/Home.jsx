@@ -41,9 +41,11 @@ export default function Home() {
             <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-full shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
               Get Started
             </Button>
-            <Button size="lg" variant="outline" className="text-white border-white/20 hover:bg-white/10 rounded-full backdrop-blur-sm">
-              View Catalog
-            </Button>
+            <Link to="/prices">
+                <Button size="lg" variant="outline" className="border-white/20 hover:bg-white/10 rounded-full backdrop-blur-sm">
+                View Catalog
+                </Button>
+            </Link>
           </div>
         </div>
       </header>

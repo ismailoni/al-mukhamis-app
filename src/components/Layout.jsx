@@ -24,11 +24,14 @@ export default function Layout({ children }) {
     <div className="flex h-screen bg-slate-50">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex-col border-r border-slate-700">
-        <div className="p-6 border-b border-slate-700">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-            Al-Mukhamis
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">Business Management</p>
+        <div className="p-6 border-b border-slate-700 flex items-center gap-3">
+          <img src="/src/assets/logo.png" alt="Al-Mukhamis" className="w-12 h-12 object-contain" />
+          <div>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+              Al-Mukhamis
+            </h1>
+            <p className="text-xs text-slate-400">Ventures</p>
+          </div>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -65,7 +68,10 @@ export default function Layout({ children }) {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-slate-900 text-white p-4 flex items-center justify-between z-50 border-b border-slate-700">
-        <h1 className="text-xl font-bold">Al-Mukhamis</h1>
+        <div className="flex items-center gap-2">
+          <img src="/src/assets/logo.png" alt="Al-Mukhamis" className="w-10 h-10 object-contain" />
+          <h1 className="text-lg font-bold">Al-Mukhamis</h1>
+        </div>
         <Button
           variant="ghost"
           size="icon"

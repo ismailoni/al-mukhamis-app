@@ -141,9 +141,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Admin Overview</h1>
-        <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your business today.</p>
+      <div className="flex items-center gap-4">
+        <img src="/src/assets/logo.png" alt="Al-Mukhamis" className="w-16 h-16 object-contain" />
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Admin Overview</h1>
+          <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your business today.</p>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

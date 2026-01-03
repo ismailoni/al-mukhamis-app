@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { formatCurrency } from "../lib/utils";
+import { LoadingState } from "../components/LoadingState";
 import toast from "react-hot-toast";
 import { Wallet, Plus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -17,7 +18,7 @@ export default function Debtors() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: debtors } = useQuery({
+  const { data: debtors, isLoading: debtorsLoading } = useQuery({
     queryKey: ["debtors"],
     queryFn: async () => {
       const s = await getDocs(collection(db, "debtors"));
@@ -45,6 +46,10 @@ export default function Debtors() {
     const formData = new FormData(e.target);
     addDebtorMutation.mutate(Object.fromEntries(formData));
   };
+
+  if (debtorsLoading) {
+    return <LoadingState message="Loading borrowing history..." />;
+  }
 
   return (
     <div className="space-y-6">

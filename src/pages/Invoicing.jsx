@@ -10,7 +10,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { formatCurrency } from "../lib/utils";
+import { formatCurrency, parseMultiplier, toFraction } from "../lib/utils";
+import { LoadingState } from "../components/LoadingState";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import toast from "react-hot-toast";
@@ -27,18 +28,6 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 
-const parseMultiplier = (value) => {
-  if (typeof value === "number") return value || 1;
-  if (!value) return 1;
-  const str = value.toString().trim();
-  if (str.includes("/")) {
-    const [num, den] = str.split("/").map(Number);
-    if (den && !Number.isNaN(num) && !Number.isNaN(den)) return num / den;
-  }
-  const num = parseFloat(str);
-  return Number.isFinite(num) ? num : 1;
-};
-
 export default function Invoicing() {
   const queryClient = useQueryClient();
   const [cart, setCart] = useState([]);
@@ -47,7 +36,7 @@ export default function Invoicing() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("cash");
   const [amountPaid, setAmountPaid] = useState(0);
 
-  const { data: products } = useQuery({
+  const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const s = await getDocs(collection(db, "products"));
@@ -67,7 +56,7 @@ export default function Invoicing() {
     }));
   }, [products]);
 
-  const { data: customers } = useQuery({
+  const { data: customers, isLoading: customersLoading } = useQuery({
     queryKey: ["customers-all"],
     queryFn: async () => {
       const s = await getDocs(collection(db, "customers"));
@@ -227,6 +216,12 @@ export default function Invoicing() {
     },
   });
 
+  const isLoadingData = productsLoading || customersLoading;
+
+  if (isLoadingData) {
+    return <LoadingState message="Loading invoicing data..." />;
+  }
+
   const generatePDF = (data) => {
     const doc = new jsPDF();
 
@@ -315,7 +310,7 @@ export default function Invoicing() {
                 >
                   {(normalizedProducts.find((p) => p.id === selectedProduct)?.saleModes || []).map((mode, idx) => (
                     <option key={idx} value={mode.name}>
-                      {mode.name} ({mode.multiplier}x) - {formatCurrency(mode.price)}
+                      {mode.name} ({toFraction(mode.multiplier)}x) - {formatCurrency(mode.price)}
                     </option>
                   ))}
                 </select>
@@ -375,7 +370,7 @@ export default function Invoicing() {
                     <div className="flex-1">
                       <div className="font-medium">{item.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {item.saleModeName} ({item.multiplier}x) • {formatCurrency(item.price)} × {item.qty}
+                        {item.saleModeName} ({toFraction(item.multiplier)}x) • {formatCurrency(item.price)} × {item.qty}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
