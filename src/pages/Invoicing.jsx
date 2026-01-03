@@ -113,6 +113,16 @@ export default function Invoicing() {
     setCart((prev) => prev.filter((item) => item.id !== productId));
   };
 
+  const updatePrice = (productId, modeName, newPrice) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === productId && item.saleModeName === modeName
+          ? { ...item, price: Math.max(Number(newPrice) || 0, 0) }
+          : item
+      )
+    );
+  };
+
   const updateQuantity = (productId, modeName, newQty) => {
     if (newQty < 1) return;
 
@@ -369,11 +379,25 @@ export default function Invoicing() {
                   >
                     <div className="flex-1">
                       <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.saleModeName} ({toFraction(item.multiplier)}x) • {formatCurrency(item.price)} × {item.qty}
+                      <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
+                        <span>
+                          {item.saleModeName} ({toFraction(item.multiplier)}x)
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <label className="text-xs uppercase tracking-wide text-slate-500">Price</label>
+                        <Input
+                          type="number"
+                          value={item.price}
+                          onChange={(e) => updatePrice(item.id, item.saleModeName, e.target.value)}
+                          className="h-8 w-28"
+                          min="0"
+                          step="0.01"
+                        />
+                        <span className="text-slate-300">×</span>
+                        <span>{item.qty}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex self-end items-center gap-3">
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"

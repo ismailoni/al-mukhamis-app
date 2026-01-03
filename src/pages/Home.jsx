@@ -9,7 +9,7 @@ export default function Home() {
     description: "Your trusted partner for bulk and retail trading of high-quality soaps, detergents, and general provisions.",
     phone: "+2347043278472",
     whatsapp: "2347043278472",
-    address: "Main Market, Lagos, Nigeria"
+    address: "L20, Adebayo Market, Bariga, Lagos, Nigeria"
   };
 
   return (
@@ -113,6 +113,56 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Featured Categories */}
+        <Card className="border-none bg-white shadow-xl shadow-slate-200/40 mb-16">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-2xl font-bold text-slate-800">What We Stock</CardTitle>
+            <CardDescription className="text-base text-slate-500">Fast-moving SKUs ready for same-day dispatch</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {["Detergents & Soaps", "Toiletries & Personal Care", "Household & Pantry", "Beverages", "Others"].map((cat, idx) => (
+              <div key={idx} className="p-5 rounded-2xl border border-slate-100 bg-slate-50 hover:shadow-md transition-all">
+                <p className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-2">Category</p>
+                <p className="text-xl font-bold text-slate-800">{cat}</p>
+                <p className="text-sm text-slate-500 mt-2">Curated brands, competitive pricing, bulk-friendly packaging.</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* How We Work */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+          {[{title:"Check live prices",desc:"Browse the daily price list and pick the exact SKUs you need."},{title:"Send your order",desc:"Share your cart via WhatsApp or place through our sales desk."},{title:"Receive fast delivery",desc:"We fulfill quickly with accurate picks and transparent logistics."}].map((item, idx) => (
+            <Card key={idx} className="border border-slate-100 shadow-sm">
+              <CardContent className="p-6 space-y-3">
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-bold">{idx + 1}</div>
+                <p className="text-lg font-semibold text-slate-800">{item.title}</p>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Testimonials */}
+        <Card className="border-none bg-gradient-to-br from-white to-slate-50 shadow-xl shadow-slate-200/40 mb-20">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-slate-800">Trusted by retailers across Lagos</CardTitle>
+            <CardDescription className="text-base text-slate-500">Hear from a few of our partners</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { quote: "Pricing is transparent and always up to date.", name: "Aisha, Shop Owner" },
+              { quote: "Deliveries arrive complete and on time.", name: "Chike, Distributor" },
+              { quote: "Easy to reorder and communicate on WhatsApp.", name: "Funmi, Supermarket" }
+            ].map((item, idx) => (
+              <div key={idx} className="p-6 rounded-2xl border border-slate-100 bg-white shadow-sm">
+                <p className="text-slate-700 text-base leading-relaxed">“{item.quote}”</p>
+                <p className="text-sm font-semibold text-slate-900 mt-4">{item.name}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
         {/* Contact Info Card */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -148,7 +198,9 @@ export default function Home() {
             <h3 className="text-2xl font-bold mb-4">Need Help?</h3>
             <p className="text-slate-400 mb-8">Not sure what you need? Talk to our product experts.</p>
             <Button className="w-full bg-white text-slate-900 hover:bg-slate-200 font-bold py-6 rounded-2xl transition-all">
-              Contact Support
+                <Link to={`https://wa.me/${businessData.whatsapp}`} target="_blank" rel="noreferrer">
+                    Contact Support
+                </Link>
             </Button>
           </div>
         </div>
