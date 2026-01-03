@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   collection,
@@ -12,6 +12,7 @@ import {
 import { db } from "../lib/firebase";
 import { formatCurrency, parseMultiplier, toFraction } from "../lib/utils";
 import { LoadingState } from "../components/LoadingState";
+import logo from "../assets/hero.png";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import toast from "react-hot-toast";
@@ -35,6 +36,22 @@ export default function Invoicing() {
   const [selectedSaleMode, setSelectedSaleMode] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("cash");
   const [amountPaid, setAmountPaid] = useState(0);
+  const [logoDataUrl, setLogoDataUrl] = useState(null);
+
+  useEffect(() => {
+    const loadLogo = async () => {
+      try {
+        const res = await fetch(logo);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoDataUrl(reader.result?.toString() || null);
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        console.error("Failed to load logo for PDF", err);
+      }
+    };
+    loadLogo();
+  }, []);
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
@@ -170,6 +187,7 @@ export default function Invoicing() {
       }
 
       const saleData = {
+        invoiceId: `INV-${Date.now()}`,
         customerName,
         customerId,
         items: cart.map((item) => ({
@@ -209,8 +227,8 @@ export default function Invoicing() {
         throw new Error("Failed to save to database: " + err.message);
       }
     },
-    onSuccess: (data) => {
-      generatePDF(data);
+    onSuccess: async (data) => {
+      await generatePDF(data);
       setCart([]);
       setAmountPaid(0);
       setSelectedCustomerId("cash");
@@ -232,23 +250,46 @@ export default function Invoicing() {
     return <LoadingState message="Loading invoicing data..." />;
   }
 
-  const generatePDF = (data) => {
-    const doc = new jsPDF();
+  const generatePDF = async (data) => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    if (logoDataUrl) {
+      doc.addImage(logoDataUrl, "PNG", 40, 32, 64, 64);
+    }
 
     doc.setFontSize(18);
-    doc.text("Al-Mukhamis Ventures", 14, 20);
+    doc.setTextColor(26, 47, 88);
+    doc.text("Al-Mukhamis Ventures", 120, 50);
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text("Soaps & Provisions | Lagos, Nigeria", 14, 26);
+    doc.text("Premium Wholesale Trading", 120, 64);
+    doc.text("Soaps & Provisions | Lagos, Nigeria", 120, 78);
 
-    doc.line(14, 30, 196, 30);
+    doc.setDrawColor(28, 100, 242);
+    doc.setLineWidth(1.2);
+    doc.line(40, 110, pageWidth - 40, 110);
 
-    doc.setTextColor(0);
-    doc.text(`Customer: ${data.customerName}`, 14, 40);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 46);
+    const metaBoxY = 126;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(234, 236, 240);
+    doc.roundedRect(40, metaBoxY, pageWidth - 80, 60, 8, 8, "FD");
+
+    doc.setTextColor(71, 85, 105);
+    doc.setFontSize(10);
+    doc.text("Customer", 56, metaBoxY + 16);
+    doc.text("Invoice ID", 56, metaBoxY + 34);
+    doc.text("Date", 56, metaBoxY + 52);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.text(data.customerName, 140, metaBoxY + 16);
+    doc.text(data.invoiceId || "", 140, metaBoxY + 34);
+    doc.text(new Date().toLocaleDateString(), 140, metaBoxY + 52);
 
     autoTable(doc, {
-      startY: 55,
+      startY: metaBoxY + 80,
       head: [["Item", "Qty", "Price", "Total"]],
       body: data.items.map((item) => [
         item.name,
@@ -257,19 +298,87 @@ export default function Invoicing() {
         formatCurrency(item.qty * item.price),
       ]),
       headStyles: { fillColor: [15, 23, 42] },
+      styles: { cellPadding: 6 },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      margin: { left: 40, right: 40 },
     });
 
-    const finalY = doc.lastAutoTable.finalY + 10;
+    // Modern summary section
+    const finalY = doc.lastAutoTable.finalY + 30;
+    const leftCol = 380;
+    const rightCol = pageWidth - 40;
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text("Subtotal:", leftCol, finalY);
+    doc.setTextColor(15, 23, 42);
+    doc.text(formatCurrency(data.total), rightCol, finalY, { align: "right" });
+
+    doc.setTextColor(100);
+    doc.text("Amount Paid:", leftCol, finalY + 18);
+    doc.setTextColor(15, 23, 42);
+    doc.text(formatCurrency(data.paid), rightCol, finalY + 18, { align: "right" });
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(leftCol, finalY + 28, rightCol, finalY + 28);
 
     doc.setFontSize(12);
-    doc.text(`Total Amount: ${formatCurrency(data.total)}`, 140, finalY);
-    doc.text(`Amount Paid: ${formatCurrency(data.paid)}`, 140, finalY + 7);
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Balance Due:", leftCol, finalY + 45);
+    const [balR, balG, balB] = data.balance > 0 ? [185, 28, 28] : [21, 128, 61];
+    doc.setTextColor(balR, balG, balB);
+    doc.text(formatCurrency(data.balance), rightCol, finalY + 45, { align: "right" });
 
-    doc.setFontSize(14);
-    doc.setTextColor(220, 38, 38);
-    doc.text(`Balance: ${formatCurrency(data.balance)}`, 140, finalY + 16);
+    // Bank account details if balance is due
+    if (data.balance > 0) {
+      const bankBoxY = finalY + 70;
 
-    doc.save(`Invoice_${data.customerName}_${Date.now()}.pdf`);
+      doc.setFillColor(240, 247, 255);
+      doc.roundedRect(40, bankBoxY, 220, 95, 8, 8, "F");
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 64, 175);
+      doc.text("PAYMENT INFORMATION", 55, bankBoxY + 20);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(71, 85, 105);
+
+      doc.text("Bank Name:", 55, bankBoxY + 40);
+      doc.setFont("helvetica", "bold");
+      doc.text("Palmpay", 130, bankBoxY + 40);
+
+      doc.setFont("helvetica", "normal");
+      doc.text("Account Name:", 55, bankBoxY + 55);
+      doc.setFont("helvetica", "bold");
+      doc.text("Oni Sherifat Omobolanle", 130, bankBoxY + 55);
+
+      doc.setFont("helvetica", "normal");
+      doc.text("Account Number:", 55, bankBoxY + 70);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(11);
+      doc.text("7043278472", 130, bankBoxY + 70);
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(100);
+      doc.text("Please use 'Invoice ID' as payment reference.", 55, bankBoxY + 85);
+    }
+
+    // Footer
+    const footerY = pageHeight - 50;
+    doc.setDrawColor(241, 245, 249);
+    doc.line(40, footerY - 10, pageWidth - 40, footerY - 10);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text("Thank you for your business!", 40, footerY + 10);
+    doc.text("Generated by Al-Mukhamis Ventures POS System", pageWidth - 40, footerY + 10, { align: "right" });
+
+    doc.save(`Invoice_${data.customerName.replace(/\s+/g, "_")}.pdf`);
   };
 
   return (
@@ -456,9 +565,19 @@ export default function Invoicing() {
               id="amountPaid"
               type="number"
               value={amountPaid}
-              onChange={(e) => setAmountPaid(e.target.value)}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                const capped = Number.isFinite(val) ? Math.min(val, totalAmount) : 0;
+                setAmountPaid(capped);
+              }}
+              max={totalAmount || undefined}
+              min="0"
+              step="0.01"
               placeholder="0.00"
             />
+            {Number(amountPaid) > totalAmount && (
+              <p className="text-sm text-destructive mt-1">Amount cannot exceed total.</p>
+            )}
           </div>
 
           {totalAmount - Number(amountPaid) > 0 && (

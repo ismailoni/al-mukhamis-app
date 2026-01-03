@@ -11,11 +11,13 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
+import { LoadingState } from "../components/LoadingState";
 
 export default function Creditors() {
   const queryClient = useQueryClient();
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [showHistory, setShowHistory] = useState(null);
 
   const { data: customers } = useQuery({
     queryKey: ["customers"],
@@ -25,7 +27,16 @@ export default function Creditors() {
     }
   });
 
+  const { data: payments, isLoading: paymentsLoading } = useQuery({
+    queryKey: ["payments"],
+    queryFn: async () => {
+      const snap = await getDocs(collection(db, "payments"));
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    },
+  });
+
   const creditors = customers?.filter((c) => (c.debt || 0) > 0) || [];
+  const filteredPayments = payments?.filter((p) => p.customerId === showHistory?.id) || [];
 
 
   const payDebtMutation = useMutation({
@@ -35,6 +46,8 @@ export default function Creditors() {
       if (amount <= 0 || amount > selectedCustomer.debt) {
         throw new Error("Invalid payment amount");
       }
+
+      const balanceAfter = Number((selectedCustomer.debt - amount).toFixed(2));
 
       const customerRef = doc(db, "customers", selectedCustomer.id);
 
@@ -47,6 +60,7 @@ export default function Creditors() {
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         amount,
+        balanceAfter,
         date: serverTimestamp(),
       });
     },
@@ -59,6 +73,10 @@ export default function Creditors() {
     onError: (err) => toast.error(err.message)
   });
 
+
+  if (!customers) {
+    return <LoadingState message="Loading creditors..." />;
+  }
 
   return (
     <div className="space-y-6">
@@ -112,13 +130,21 @@ export default function Creditors() {
                       {formatCurrency(customer.debt)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
+                  <TableCell className="text-right space-x-2 space-y-2">
                     <Button
                       onClick={() => setSelectedCustomer(customer)}
                       size="sm"
                       className="gap-2"
                     >
                       <DollarSign className="w-4 h-4" /> Log Payment
+                    </Button>
+                    <Button
+                      onClick={() => setShowHistory(customer)}
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      History
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -170,6 +196,59 @@ export default function Creditors() {
                   disabled={!paymentAmount || payDebtMutation.isPending}
                 >
                   {payDebtMutation.isPending ? "Saving..." : "Save Payment"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Payment History Modal */}
+      {showHistory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-xl max-h-[80vh] overflow-hidden">
+            <CardHeader className="flex flex-row items-start justify-between gap-2">
+              <div>
+                <CardTitle>Payment History</CardTitle>
+                <CardDescription>{showHistory.name}</CardDescription>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setShowHistory(null)}>
+                ×
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4 overflow-y-auto max-h-[65vh] pr-2">
+              {paymentsLoading ? (
+                <p className="text-muted-foreground">Loading payments...</p>
+              ) : filteredPayments.length === 0 ? (
+                <p className="text-muted-foreground">No payments recorded for this customer.</p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredPayments
+                    .sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0))
+                    .map((payment) => (
+                      <div key={payment.id} className="border rounded-lg p-3 space-y-1">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>
+                            {payment.date?.seconds
+                              ? new Date(payment.date.seconds * 1000).toLocaleString()
+                              : ""}
+                          </span>
+                          <span className="font-semibold text-foreground">{formatCurrency(payment.amount)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">Payment recorded</div>
+                        {typeof payment.balanceAfter === "number" && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Balance after payment</span>
+                            <span className="font-semibold text-foreground">{formatCurrency(payment.balanceAfter)}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setShowHistory(null)}>
+                  Close
                 </Button>
               </div>
             </CardContent>

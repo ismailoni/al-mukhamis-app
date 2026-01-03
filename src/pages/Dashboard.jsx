@@ -22,12 +22,20 @@ export default function Dashboard() {
       const products = productsSnap.docs.map(d => d.data()).filter(p => !p.deleted);
       const customers = customerSnap.docs.map(d => d.data());
 
-      // Calculate today's sales
+      // Calculate today's and yesterday's sales
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todaySales = sales.filter(sale => {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const todaySales = sales.filter((sale) => {
         const saleDate = sale.date?.seconds ? new Date(sale.date.seconds * 1000) : new Date(0);
         return saleDate >= today;
+      });
+
+      const yesterdaySales = sales.filter((sale) => {
+        const saleDate = sale.date?.seconds ? new Date(sale.date.seconds * 1000) : new Date(0);
+        return saleDate >= yesterday && saleDate < today;
       });
 
       // Calculate growth (compare last 7 days vs previous 7 days)
@@ -58,6 +66,13 @@ export default function Dashboard() {
         salesToday: todaySales.length,
         revenueGrowth: growth,
         todayRevenue: todaySales.reduce((acc, curr) => acc + curr.total, 0),
+        yesterdayRevenue: yesterdaySales.reduce((acc, curr) => acc + curr.total, 0),
+        dayChange:
+          yesterdaySales.reduce((acc, curr) => acc + curr.total, 0) > 0
+            ? ((todaySales.reduce((acc, curr) => acc + curr.total, 0) -
+                yesterdaySales.reduce((acc, curr) => acc + curr.total, 0)) /
+                yesterdaySales.reduce((acc, curr) => acc + curr.total, 0)) * 100
+            : 0,
         todayDetails: todaySales,
         allProducts: products
       };
@@ -140,137 +155,143 @@ export default function Dashboard() {
     );
   }
 
-  return (
+return (
     <div className="space-y-8">
-      <div className="flex items-center gap-4">
-        <img src={hero} alt="Al-Mukhamis" className="w-16 h-16 object-contain" />
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Admin Overview</h1>
-          <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your business today.</p>
+        <div className="flex items-center gap-4">
+            <img src={hero} alt="Al-Mukhamis" className="w-16 h-16 object-contain" />
+            <div>
+                <h1 className="text-3xl font-bold text-slate-900">Admin Overview</h1>
+                <p className="text-muted-foreground">Welcome back! Here&apos;s what&apos;s happening with your business today.</p>
+            </div>
         </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {cards.map((card, i) => (
-          <Card key={i} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {card.title}
-              </CardTitle>
-              <div className={`p-2 rounded-lg ${card.iconBg}`}>
-                <card.icon className={`h-5 w-5 ${card.iconColor}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{card.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {card.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              Quick Actions
-            </CardTitle>
-            <CardDescription>Frequently used features and reports</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full justify-start" variant="outline" size="lg" onClick={() => setShowDailyReport(true)}>
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              View Daily Report
-            </Button>
-            <Button className="w-full justify-start" variant="outline" size="lg" onClick={exportInventoryCSV}>
-              <Package className="mr-2 h-4 w-4" />
-              Export Inventory CSV
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-          <CardHeader>
-            <CardTitle>Business Performance</CardTitle>
-            <CardDescription className="text-slate-300">
-              Key metrics at a glance
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-300">Total Products</span>
-              <span className="text-2xl font-bold">{stats?.totalProducts || 0}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-300">Sales Today</span>
-              <span className="text-2xl font-bold text-green-400">{stats?.salesToday || 0}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-300">Revenue Growth</span>
-              <span className={`text-2xl font-bold ${(stats?.revenueGrowth || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {(stats?.revenueGrowth || 0) >= 0 ? '+' : ''}{(stats?.revenueGrowth || 0).toFixed(1)}%
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {showDailyReport && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Daily Sales Report</CardTitle>
-                <CardDescription>
-                  {new Date().toLocaleDateString()} - Total Revenue: ${stats?.todayRevenue?.toFixed(2) || '0.00'}
-                </CardDescription>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setShowDailyReport(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="overflow-auto">
-              {stats?.todayDetails?.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {stats.todayDetails.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell>
-                          {new Date(sale.date.seconds * 1000).toLocaleTimeString()}
-                        </TableCell>
-                        <TableCell>{sale.customerName}</TableCell>
-                        <TableCell>{sale.items.length} items</TableCell>
-                        <TableCell>
-                          <span className={sale.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}>
-                            {sale.paymentStatus === 'paid' ? 'Paid' : 'Credit'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          ${sale.total.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No sales recorded today</p>
-              )}
-            </CardContent>
-          </Card>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {cards.map((card, i) => (
+                <Card key={i} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {card.title}
+                        </CardTitle>
+                        <div className={`p-2 rounded-lg ${card.iconBg}`}>
+                            <card.icon className={`h-5 w-5 ${card.iconColor}`} />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold">{card.value}</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            {card.description}
+                        </p>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
-      )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border-2">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                        Quick Actions
+                    </CardTitle>
+                    <CardDescription>Frequently used features and reports</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <Button className="w-full justify-start" variant="outline" size="lg" onClick={() => setShowDailyReport(true)}>
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        View Daily Report
+                    </Button>
+                    <Button className="w-full justify-start" variant="outline" size="lg" onClick={exportInventoryCSV}>
+                        <Package className="mr-2 h-4 w-4" />
+                        Export Inventory CSV
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <Card className="border-2 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+                <CardHeader>
+                    <CardTitle>Business Performance</CardTitle>
+                    <CardDescription className="text-slate-300">
+                        Key metrics at a glance
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-300">Total Products</span>
+                        <span className="text-2xl font-bold">{stats?.totalProducts || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-300">Sales Today</span>
+                        <span className="text-2xl font-bold text-green-400">{stats?.salesToday || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-300">Revenue Growth</span>
+                        <span className={`text-2xl font-bold ${(stats?.revenueGrowth || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {(stats?.revenueGrowth || 0) >= 0 ? '+' : ''}{(stats?.revenueGrowth || 0).toFixed(1)}%
+                        </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-300">vs Yesterday</span>
+                        <span className={`text-2xl font-bold ${(stats?.dayChange || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {(stats?.dayChange || 0) >= 0 ? '+' : ''}{(stats?.dayChange || 0).toFixed(1)}%
+                        </span>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
+        {showDailyReport && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <Card className="w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Daily Sales Report</CardTitle>
+                            <CardDescription>
+                                {new Date().toLocaleDateString()} - Total Revenue: ₦{stats?.todayRevenue?.toFixed(2) || '0.00'}
+                            </CardDescription>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setShowDailyReport(false)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="overflow-auto">
+                        {stats?.todayDetails?.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Time</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>Items</TableHead>
+                                        <TableHead>Payment</TableHead>
+                                        <TableHead className="text-right">Total</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {stats.todayDetails.map((sale) => (
+                                        <TableRow key={sale.id}>
+                                            <TableCell>
+                                                {new Date(sale.date.seconds * 1000).toLocaleTimeString()}
+                                            </TableCell>
+                                            <TableCell>{sale.customerName}</TableCell>
+                                            <TableCell>{sale.items.length} items</TableCell>
+                                            <TableCell>
+                                                <span className={sale.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}>
+                                                    {sale.paymentStatus === 'paid' ? 'Paid' : 'Credit'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right font-semibold">
+                                                ₦{sale.total.toFixed(2)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <p className="text-center text-muted-foreground py-8">No sales recorded today</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+        )}
     </div>
-  );
+);
 }

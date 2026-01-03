@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   collection,
@@ -46,6 +46,7 @@ export default function Inventory() {
     { id: 1, name: "Carton", multiplier: "1", price: 0 },
   ]);
   const [stockRows, setStockRows] = useState([{ id: 1, productId: "", qty: 1 }]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch Products
   const { data: products, isLoading: productsLoading } = useQuery({
@@ -187,6 +188,18 @@ export default function Inventory() {
     onError: (err) => toast.error(err.message),
   });
 
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (!searchTerm.trim()) return products;
+    const term = searchTerm.toLowerCase();
+    return products.filter(
+      (p) =>
+        p.name?.toLowerCase().includes(term) ||
+        p.category?.toLowerCase().includes(term) ||
+        p.saleModes?.some((m) => m.name?.toLowerCase().includes(term))
+    );
+  }, [products, searchTerm]);
+
   const isLoadingData = productsLoading || historyLoading;
 
   if (isLoadingData) {
@@ -195,12 +208,12 @@ export default function Inventory() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
         <div>
           <h1 className="text-3xl font-bold">Inventory Management</h1>
           <p className="text-muted-foreground mt-1">Manage your product catalog and stock levels</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4 md:mt-0">
           <Button onClick={() => setIsStockModalOpen(true)} variant="outline" size="lg" className="gap-2">
             <History className="w-4 h-4" /> Add Stock
           </Button>
@@ -218,7 +231,16 @@ export default function Inventory() {
           </CardTitle>
           <CardDescription>View and manage all products in your inventory</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <p className="text-sm text-muted-foreground">Search by name, category, or sale mode</p>
+            <Input
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="md:w-64"
+            />
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -231,7 +253,7 @@ export default function Inventory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products?.map((product) => (
+              {filteredProducts?.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>
@@ -269,6 +291,13 @@ export default function Inventory() {
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                     No products found. Add your first product to get started.
+                  </TableCell>
+                </TableRow>
+              )}
+              {products?.length > 0 && filteredProducts?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    No matches for <span className="font-semibold">{searchTerm || "your search"}</span>.
                   </TableCell>
                 </TableRow>
               )}
