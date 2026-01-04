@@ -1,4 +1,7 @@
 User-agent: *
-Allow: /
+# Prevent Google from indexing your admin and data pages
+Disallow: /admin
+Disallow: /admin/*
 
+# Point Google to your sitemap
 Sitemap: https://al-mukhamis.vercel.app/sitemap.xml
