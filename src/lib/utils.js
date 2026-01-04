@@ -31,7 +31,9 @@ export const parseMultiplier = (value) => {
 };
 
 export const toFraction = (decimal) => {
-  if (!Number.isFinite(decimal) || decimal <= 0) return "1";
+  if (!Number.isFinite(decimal)) return "0";
+  if (decimal === 0) return "0";
+  if (decimal < 0) return "0";
   if (Number.isInteger(decimal)) return decimal.toString();
 
   const tolerence = 1e-6;

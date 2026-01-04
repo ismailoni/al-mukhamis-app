@@ -68,7 +68,7 @@ export default function Inventory() {
 
   const openNewProduct = () => {
     setFormValues({ name: "", category: "", stock: 0 });
-    setSaleModes([{ id: Date.now(), name: "Unit", multiplier: "1", price: 0 }]);
+    setSaleModes([{ id: Date.now(), name: "Carton", multiplier: "1", price: 0 }]);
     setEditingItem(null);
     setIsModalOpen(true);
   };
@@ -83,7 +83,7 @@ export default function Inventory() {
     if (product.saleModes?.length) {
       setSaleModes(product.saleModes.map((m, idx) => ({ id: idx + 1, ...m, multiplier: (m.multiplier ?? 1).toString() })));
     } else {
-      setSaleModes([{ id: Date.now(), name: "Unit", multiplier: "1", price: product.price || 0 }]);
+      setSaleModes([{ id: Date.now(), name: "Carton", multiplier: "1", price: product.price || 0 }]);
     }
 
     setEditingItem(product);
@@ -91,11 +91,40 @@ export default function Inventory() {
   };
 
   const updateSaleMode = (id, key, value) => {
-    setSaleModes((prev) => prev.map((mode) => (mode.id === id ? { ...mode, [key]: value } : mode)));
+    setSaleModes((prev) =>
+      prev.map((mode) => {
+        if (mode.id !== id) return mode;
+        
+        const updated = { ...mode, [key]: value };
+        
+        // Auto-update multiplier when name changes to carton-based modes
+        if (key === "name") {
+          switch (value) {
+            case "Carton":
+              updated.multiplier = "1";
+              break;
+            case "1/2 Carton":
+              updated.multiplier = "1/2";
+              break;
+            case "1/3 Carton":
+              updated.multiplier = "1/3";
+              break;
+            case "1/4 Carton":
+              updated.multiplier = "1/4";
+              break;
+            default:
+              // Keep existing multiplier for other modes
+              break;
+          }
+        }
+        
+        return updated;
+      })
+    );
   };
 
   const addSaleMode = () => {
-    setSaleModes((prev) => [...prev, { id: Date.now(), name: "", multiplier: "1", price: 0 }]);
+    setSaleModes((prev) => [...prev, { id: Date.now(), name: "Carton", multiplier: "1", price: 0 }]);
   };
 
   const removeSaleMode = (id) => {
@@ -259,9 +288,9 @@ export default function Inventory() {
                   <TableCell>
                     <Badge variant="secondary">{product.category}</Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className='min-w-[125px]'>
                     {product.stock < 10 ? (
-                      <Badge variant="warning">{toFraction(product.stock)} (Low Stock)</Badge>
+                      <Badge variant="warning"  className="text-[10px] min-w-[40px]">{toFraction(product.stock)} (Low Stock)</Badge>
                     ) : (
                       <span className="text-muted-foreground">{toFraction(product.stock)}</span>
                     )}
@@ -400,11 +429,23 @@ export default function Inventory() {
                       <div key={mode.id} className="grid grid-cols-12 gap-2 items-center border p-3 rounded-lg">
                         <div className="col-span-4">
                           <Label className="text-xs">Mode</Label>
-                          <Input
+                          <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             value={mode.name}
                             onChange={(e) => updateSaleMode(mode.id, "name", e.target.value)}
-                            placeholder="e.g., 1/2 carton"
-                          />
+                          >
+                            <option value="Carton">Carton</option>
+                            <option value="1/2 Carton">1/2 Carton</option>
+                            <option value="1/3 Carton">1/3 Carton</option>
+                            <option value="1/4 Carton">1/4 Carton</option>
+                            <option value="1/2 Pack">1/2 Pack</option>
+                            <option value="1 Pack">1 Pack</option>
+                            <option value="3 Packs">3 Packs</option>
+                            <option value="4 Packs">4 Packs</option>
+                            <option value="5 Packs">5 Packs</option>
+                            <option value="1 Roll">1 Roll</option>
+                            <option value="3 Rolls">3 Rolls</option>
+                          </select>
                         </div>
                         <div className="col-span-3">
                           <Label className="text-xs">Multiplier</Label>
@@ -412,7 +453,7 @@ export default function Inventory() {
                             type="text"
                             value={mode.multiplier}
                             onChange={(e) => updateSaleMode(mode.id, "multiplier", e.target.value)}
-                            placeholder="Units per mode (e.g., 1/2)"
+                            placeholder="e.g., 1/2"
                           />
                         </div>
                         <div className="col-span-4">
