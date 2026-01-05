@@ -34,7 +34,7 @@ import {
 import { Badge } from "../components/ui/badge";
 import autoTable from "jspdf-autotable";
 import jsPDF from "jspdf";
-import logo from "../assets/logo.png";
+import logo from "../assets/hero.png";
 
 export default function Customers() {
   const queryClient = useQueryClient();
@@ -283,7 +283,7 @@ export default function Customers() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Customers</h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="mt-1 text-muted-foreground">
           Manage your customer directory and purchase history
         </p>
         <div className="mt-3">
@@ -307,7 +307,7 @@ export default function Customers() {
         </CardHeader>
         <CardContent>
           {historyError && (
-            <p className="text-red-500 text-sm mb-3">
+            <p className="mb-3 text-sm text-red-500">
               Error loading history. Check Firestore indexes.
             </p>
           )}
@@ -324,7 +324,7 @@ export default function Customers() {
                 <TableRow>
                   <TableCell
                     colSpan={3}
-                    className="text-center py-12 text-muted-foreground"
+                    className="py-12 text-center text-muted-foreground"
                   >
                     No customers added yet. Start by adding your first customer.
                   </TableCell>
@@ -353,7 +353,7 @@ export default function Customers() {
                     ) : null}
                   </TableCell>
 
-                  <TableCell className="text-right space-x-2">
+                  <TableCell className="space-x-2 text-right">
                     <Button
                       onClick={() => setHistoryCustomer(customer)}
                       variant="outline"
@@ -372,7 +372,7 @@ export default function Customers() {
 
       {/* Add Customer Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle>Add Customer</CardTitle>
@@ -435,12 +435,12 @@ export default function Customers() {
 
       {/* History Modal */}
       {historyCustomer && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 duration-200 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
           <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border-none overflow-hidden">
             {/* Modal Header */}
-            <CardHeader className="flex flex-row items-center justify-between border-b bg-white p-6">
+            <CardHeader className="flex flex-row items-center justify-between p-6 bg-white border-b">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
+                <div className="flex items-center justify-center w-12 h-12 text-xl font-bold text-blue-700 bg-blue-100 rounded-full">
                   {historyCustomer.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -463,7 +463,7 @@ export default function Customers() {
             </CardHeader>
 
             {/* Summary Stats Bar - Sticky */}
-            <div className="bg-slate-50 border-b p-4 px-6 grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4 p-4 px-6 border-b bg-slate-50">
               <div className="space-y-1">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
                   Total Spent
@@ -472,7 +472,7 @@ export default function Customers() {
                   {formatCurrency(totalSpent)}
                 </p>
               </div>
-              <div className="space-y-1 border-x px-4 border-slate-200">
+              <div className="px-4 space-y-1 border-x border-slate-200">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
                   Items Bought
                 </p>
@@ -480,7 +480,7 @@ export default function Customers() {
                   {totalItemsBought}
                 </p>
               </div>
-              <div className="space-y-1 pl-2">
+              <div className="pl-2 space-y-1">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
                   Current Debt
                 </p>
@@ -494,9 +494,9 @@ export default function Customers() {
               </div>
             </div>
 
-            <CardContent className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
+            <CardContent className="flex-1 p-6 space-y-6 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
               {/* Tab Navigation */}
-              <div className="inline-flex p-1 bg-slate-100 rounded-xl w-full">
+              <div className="inline-flex w-full p-1 bg-slate-100 rounded-xl">
                 <button
                   onClick={() => setActiveHistoryTab("purchases")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all ${
@@ -523,11 +523,11 @@ export default function Customers() {
               <div className="space-y-4">
                 {activeHistoryTab === "purchases" ? (
                   historyLoading ? (
-                    <div className="text-center py-10 text-slate-400">
+                    <div className="py-10 text-center text-slate-400">
                       Loading purchases...
                     </div>
                   ) : history?.length === 0 ? (
-                    <div className="text-center py-10 space-y-2">
+                    <div className="py-10 space-y-2 text-center">
                       <ShoppingBag className="w-8 h-8 mx-auto text-slate-200" />
                       <p className="text-slate-400">
                         No purchase history available.
@@ -537,9 +537,9 @@ export default function Customers() {
                     history?.map((sale) => (
                       <div
                         key={sale.id}
-                        className="group border rounded-xl overflow-hidden hover:border-blue-200 transition-colors"
+                        className="overflow-hidden transition-colors border group rounded-xl hover:border-blue-200"
                       >
-                        <div className="bg-slate-50 px-4 py-2 border-b flex justify-between items-center">
+                        <div className="flex items-center justify-between px-4 py-2 border-b bg-slate-50">
                           <span className="text-xs font-bold text-slate-500">
                             {sale.date?.seconds
                               ? new Date(
@@ -555,11 +555,11 @@ export default function Customers() {
                           {sale.items?.map((item, idx) => (
                             <div
                               key={idx}
-                              className="flex justify-between text-sm group-hover:bg-slate-50/50 rounded px-1"
+                              className="flex justify-between px-1 text-sm rounded group-hover:bg-slate-50/50"
                             >
                               <span className="text-slate-600">
                                 {item.name}{" "}
-                                <span className="text-slate-400 mx-1">×</span>{" "}
+                                <span className="mx-1 text-slate-400">×</span>{" "}
                                 {item.qty}
                               </span>
                               <span className="font-medium text-slate-900">
@@ -572,11 +572,11 @@ export default function Customers() {
                     ))
                   )
                 ) : paymentsLoading ? (
-                  <div className="text-center py-10 text-slate-400">
+                  <div className="py-10 text-center text-slate-400">
                     Loading payments...
                   </div>
                 ) : paymentHistory?.length === 0 ? (
-                  <div className="text-center py-10 space-y-2">
+                  <div className="py-10 space-y-2 text-center">
                     <Phone className="w-8 h-8 mx-auto text-slate-200" />
                     <p className="text-slate-400">No debt payments found.</p>
                   </div>
@@ -584,7 +584,7 @@ export default function Customers() {
                   paymentHistory?.map((payment) => (
                     <div
                       key={payment.id}
-                      className="border rounded-xl p-4 bg-emerald-50/30 border-emerald-100 flex items-center justify-between"
+                      className="flex items-center justify-between p-4 border rounded-xl bg-emerald-50/30 border-emerald-100"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -617,16 +617,16 @@ export default function Customers() {
               </div>
             </CardContent>
 
-            <div className="p-6 border-t bg-white flex justify-end gap-3">
+            <div className="flex justify-end gap-3 p-6 bg-white border-t">
               <Button
                 variant="outline"
-                className="rounded-xl px-8"
+                className="px-8 rounded-xl"
                 onClick={() => setHistoryCustomer(null)}
               >
                 Close
               </Button>
               <Button
-                className="rounded-xl px-8 bg-blue-600 hover:bg-blue-700"
+                className="px-8 bg-blue-600 rounded-xl hover:bg-blue-700"
                 onClick={() =>
                   generateHistoryPDF(historyCustomer, history, paymentHistory, {
                     totalSpent,
