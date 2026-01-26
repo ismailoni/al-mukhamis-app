@@ -5,7 +5,7 @@ import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import { Input } from "./input";
 
-const Combobox = React.forwardRef(({ options = [], value, onValueChange, placeholder = "Select..." }, ref) => {
+const Combobox = React.forwardRef(({ options = [], value, onValueChange, placeholder = "Select...", disabled = false }, ref) => {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
 
@@ -25,24 +25,28 @@ const Combobox = React.forwardRef(({ options = [], value, onValueChange, placeho
         variant="outline"
         role="combobox"
         aria-expanded={open}
-        className="w-full justify-between h-10"
-        onClick={() => setOpen(!open)}
+        className="justify-between w-full h-10"
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) return;
+          setOpen(!open);
+        }}
       >
         <span className="truncate">{selectedLabel}</span>
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        <ChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
       </Button>
 
       {open && (
-        <div className="absolute z-50 w-full mt-2 p-2 border rounded-md bg-popover shadow-md">
+        <div className="absolute z-50 w-full p-2 mt-2 border rounded-md shadow-md bg-popover">
           <Input
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="mb-2 h-8"
+            className="h-8 mb-2"
           />
-          <div className="max-h-48 overflow-y-auto space-y-1">
+          <div className="space-y-1 overflow-y-auto max-h-48">
             {filtered.length === 0 ? (
-              <div className="text-sm text-muted-foreground p-2 text-center">
+              <div className="p-2 text-sm text-center text-muted-foreground">
                 No results found
               </div>
             ) : (
@@ -50,7 +54,7 @@ const Combobox = React.forwardRef(({ options = [], value, onValueChange, placeho
                 <Button
                   key={option.value}
                   variant="ghost"
-                  className="w-full justify-start font-normal"
+                  className="justify-start w-full font-normal"
                   onClick={() => {
                     onValueChange(option.value);
                     setOpen(false);

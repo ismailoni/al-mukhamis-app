@@ -270,6 +270,7 @@ export default function Inventory() {
               className="md:w-64"
             />
           </div>
+          <div className="overflow-x-auto -mx-4 md:mx-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -332,6 +333,7 @@ export default function Inventory() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -344,6 +346,7 @@ export default function Inventory() {
           <CardDescription>Recent stock additions across products</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto -mx-4 md:mx-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -373,6 +376,7 @@ export default function Inventory() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

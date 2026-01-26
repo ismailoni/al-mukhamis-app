@@ -21,6 +21,13 @@ export default function Layout({ children }) {
     { name: "Creditors", path: "/admin/creditors", icon: DollarSign },
     { name: "Debtors (Lenders)", path: "/admin/debtors", icon: Wallet },
   ];
+  const bottomNav = [
+    { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
+    { name: "Inventory", path: "/admin/inventory", icon: Package },
+    { name: "Invoicing", path: "/admin/invoicing", icon: Receipt },
+    { name: "Customers", path: "/admin/customers", icon: Users },
+    { name: "Sales", path: "/admin/sales", icon: TrendingUp },
+  ];
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -135,6 +142,28 @@ export default function Layout({ children }) {
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Nav */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 z-50 pb-[env(safe-area-inset-bottom)]">
+        <nav className="grid grid-cols-5">
+          {bottomNav.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center justify-center py-2 text-xs ${
+                  isActive ? "text-blue-600" : "text-slate-600"
+                }`}
+              >
+                <Icon className="mb-1" size={20} />
+                <span className="leading-none">{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 }

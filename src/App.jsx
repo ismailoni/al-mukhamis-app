@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { MobileAppWrapper } from "./components/MobileAppWrapper";
 
 // Pages
 import Home from "./pages/Home";
@@ -21,10 +22,11 @@ const queryClient = new QueryClient();
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Toaster position="top-right" />
+    <MobileAppWrapper>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrowserRouter>
+            <Toaster position="top-right" />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
@@ -51,5 +53,6 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
+    </MobileAppWrapper>
   );
 }
