@@ -218,16 +218,20 @@ export default function Inventory() {
   });
 
   const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    if (!searchTerm.trim()) return products;
-    const term = searchTerm.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.name?.toLowerCase().includes(term) ||
-        p.category?.toLowerCase().includes(term) ||
-        p.saleModes?.some((m) => m.name?.toLowerCase().includes(term))
-    );
-  }, [products, searchTerm]);
+  if (!products) return [];
+  const term = searchTerm.trim().toLowerCase();
+
+  const filtered = !term
+    ? [...products]
+    : products.filter(
+        (p) =>
+          p.name?.toLowerCase().includes(term) ||
+          p.category?.toLowerCase().includes(term) ||
+          p.saleModes?.some((m) => m.name?.toLowerCase().includes(term))
+      );
+
+  return filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+}, [products, searchTerm]);
 
   const isLoadingData = productsLoading || historyLoading;
 
